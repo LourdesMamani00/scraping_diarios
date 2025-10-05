@@ -1,3 +1,4 @@
+##Instalacion de pandas
 para linux fedora instalar:
  /bin/python -m pip install --user pandas
  para windows
@@ -8,4 +9,4 @@ Busca PowerShell y ábrelo.
  py -m pip install --user pandas
 
 
-#  para bautiful soup instalar (esto no lo intale pero supuestamente es una recomendacion):   pip install requests beautifulsoup4
+Para bautiful soup instalar (esto no lo intale pero supuestamente es una recomendacion):   pip install requests beautifulsoup4
