@@ -33,7 +33,7 @@ O, si tienes el lanzador de Python (py):
 ```bash
 py -m pip install --user pandas
 ```
-## Como ejecutas el proyecto:
+## Como ejecutar el proyecto:
 ```bash
 python scraping.py
 ```
