@@ -5,9 +5,17 @@ import re # sirve para buscar, validar y limpiar textos, para expresiones regula
 from datetime import datetime #fechas
 from urllib.parse import urljoin # unir urls relativas con absolutas
 
-#palabras claves 
-palabras_claves = re.compile(
-    r'\sparo?s\s|paran|asamblea|huelga|marcha|cortes? de ruta|cortan ruta|corte? de calle|cortan calle|'
+#########################################################################################################
+#   CONFIGURACIONES INICIALES
+########################################################################################################
+
+########################################
+# 1. PALABRAS CLAVES
+########################################
+
+#palabras claves FIJARSE BIEN LUEGO \sate\s O PARO
+PALABRAS_CLAVES = re.compile(
+    r'paro[a-zA-Z]*|paran|asamblea|huelga|marcha|cortes? de ruta|cortan ruta|corte? de calle|cortan calle|'
     r'trabaj[a-zA-Z]*|sindica[a-zA-Z]*|paritari[a-zA-Z]*|gremi[a-zA-Z]*|cgt|'
     r'\suta\s|\sate\s|luz y fuerza|uepc|\ssep\s|\sutep\s|surrbac|economia popular|economia informal|'
     r'conflicto|despid[a-zA-Z]*|salar[a-zA-Z]*|transporte|aguinaldo|sueldo|bancaria|'
@@ -15,39 +23,91 @@ palabras_claves = re.compile(
     r'suspen[a-zA-Z]*|laboral[a-zA-Z]*|conciliacion|moviliz[a-zA-Z]*|ajuste|protest[a-zA-Z]*|derechos?|cortes?',
     flags=re.IGNORECASE
 )
+#----------------------------------------------------------------------
+#########################################
+# 2. DIARIOS, CARPETAS Y ETIQUETAS (PARAMETROS DE LOS DIARIOS)
+#########################################
 
-''' funciones auxiliares '''
+DIARIOS = [
+    "https://www.laizquierdadiario.com/",
+    "https://www.lavoz.com.ar/",
+    "http://www.lavozdesanjusto.com.ar/",
+    "https://www.eldiariocba.com.ar/",
+    "https://www.cba24n.com.ar/",
+    "https://www.puntal.com.ar/",
+]
+
+CARPETAS = [
+    "la_izquierda",
+    "la_voz_del_interior",
+    "la_voz_de_san_justo",
+    "el_diario_villa_maria",
+    "cba24n",
+    "puntal_rio_cuarto",
+]
+
+HTML_TAGS = [
+    ["div.columnista a", "h2 a", "h3 a"],
+    ["h2 a", "h1 a"],
+    ["a"],
+    ["h2 a"],
+    ["div a"],
+    ["h1 a", "h2 a", "h3 a"],
+]
+
+#VER BIEN LUEGO QUE ONDA CON ESTO
+TAG_TITULOS = [
+    ['h1'], ['h1'], ['article h1'], ['article h1'], ['article h1'], ['article h1']
+]
+
+#VER BIEN LUEGO QUE ONDA CON ESTO
+TAG_NOTAS = [
+    ['div p'], ['article p'], ['div p'], ['div p'], ['div p'], ['div p']
+]
+
+####################################################################################################################
+# FUNCIONES AUXILIARES
+##################################################################################################################
+
 #conseguir los enlaces, consta de 2 parametros: la url y la tematica o etiqueta
-def get_scraping_links(page_url, tag_link):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/140.0.0.0 Safari/537.36"
-    }
-    r = requests.get(page_url, headers=headers) #obtiene el url
-    soup = BeautifulSoup(r.text, 'html.parser') #parsea el html
-    links = [urljoin(page_url, a.get("href")) for a in soup.select(tag_link)] #fijarse luego
-    return links
+def get_scraping_links(pag_web, tag_link):
+    """Obtiene todos los enlaces válidos desde una página HTML."""
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        resp = requests.get(pag_web, headers=headers, timeout=10)
+        if resp.status_code != 200:
+            print(f"[WARN] No se pudo acceder a {pag_web} - Código {resp.status_code}")
+            return []
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        links = []
+        for tag in soup.select(tag_link):
+            href = tag.get("href")
+            if href:
+                full_link = requests.compat.urljoin(pag_web, href)
+                links.append(full_link)
+        return list(set(links))
+    except Exception as e:
+        print(f"[ERROR] scraping_links({pag_web}): {e}")
+        return []
 
-''' esta funcion extrae la seccion del link, ejemplo: 
-extract section("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
-Devuelve: "provincia-de-buenos-aires" 
-'''
+
 #IMPORTANTE: aplicar un flitro de cordoba, solo de cordoba con izquierda diario, los demas diarios son locales
 def extraer_seccion(url): #preguntar luego si es correcto
+    ''' esta funcion extrae la seccion del link, ejemplo: extract section("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
+    Devuelve: "provincia-de-buenos-aires" . Si no encuentra la seccion devuelve "NA"'''
     url = url.lower()
     match = re.search(r'\.com/([^/]+)/', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
     print(match)
     print(match.group(1) if match else "NA")
     return match.group(1) if match else "NA" #si encuentra el patron devuelve el primer elemento del grupo, sino NA
 
-"""esta funcion devuelve la cantidad de palabras en el link,
-ejemplo: link_length("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
-devuelve: 1 donde 1 es la cantidad de palabras en la seccion del link que es noticia123"
-"""
+
 #TENER CUIDAdo con esto
 #fijarse bien luego, este siempre devuelve el ultimo elemento del link
 def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elemento del link
+    """esta funcion devuelve la cantidad de palabras en el link, ejemplo: link_length("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
+    devuelve: 1 donde 1 es la cantidad de palabras en la seccion del link que es noticia123"
+    """
     url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
     print("Holiiiiiiiiiiiiiiiiis")
     print(url.split("-"))
@@ -55,18 +115,44 @@ def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elem
 
 
 def create_tag(url):
+    """esta funcion crea tags a partir del link, ejemplo:
+    create_tag("https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/casas-paro-noticia123")
+    devuelve: "paro"
+    """
     url = url.lower() #convierte a minusculas
     url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
-    print("URL EN CREATE TAG")
-    print(url)
+    #print("URL EN CREATE TAG")
+    #print(url)
     url = (url.replace("á","a").replace("é","e")
               .replace("í","i").replace("ó","o").replace("ú","u")
               .replace("-", " ")) #elimina tildes y reemplaza guiones por espacios
-    tags = palabras_claves.findall(url) #busca todas las coincidencias de palabras claves en el url
-    return " ".join(tags)
+    tags = PALABRAS_CLAVES.findall(url) #busca todas las coincidencias de palabras claves en el url
+    return " ".join(tags) #une las palabras claves encontradas en una sola cadena separada por espacios, si no encuentra palabras claves devuelve vacio ' '
 
 
-# ejemplo de uso create tag
+# ejemplo de uso create tag, CREO QUE ESTA MAL, FIJARSE QUE ONDA CON LAS EXPRESIONES REGULARES
+ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123"
+print("EJEMPLO DE CREATE TAG")
+print(create_tag(ejemplo))
+
+print("FIN DEL EJEMPLO DE CREATE TAG")
+url = "https://www.laizquierdadiario.com/huelga-Trabajadores-en-huelga-por-mejores-salarios-paro"
+print(create_tag(url))
+
+def crear_enlaces(diario, html_tags):
+
+
+#FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
+
+
+##################################################################################################################
+#   FUNCION PRINCIPAL O SCRAPING PRINCIPAL
+##################################################################################################################
+#for i, diario in enumerate(DIARIOS):
+ #   df = crear_enlaces(diario, HTML_TAGS[i])
+
+
+
 """
 texto = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/noticia123"
 print(create_tag(texto))
@@ -97,7 +183,7 @@ textos= [
 ]
 
 for t in textos:
-    if palabras_claves.search(t):
+    if PALABRAS_CLAVES.search(t):
         print("Coincidencia:", t)
         """
 # funcion para obtener los links, se usa en crate_links
