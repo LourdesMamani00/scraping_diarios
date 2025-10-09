@@ -2,7 +2,7 @@ import requests #para hacer peticiones http
 from bs4 import BeautifulSoup #para parsear html
 import pandas as pd # para analizar y manejar datitos, 
 import re # sirve para buscar, validar y limpiar textos, para expresiones regulares, es rapido
-from datetime import datetime #fechas
+from datetime import date, datetime #fechas
 from urllib.parse import urljoin # unir urls relativas con absolutas
 
 #########################################################################################################
@@ -46,6 +46,15 @@ CARPETAS = [
     "puntal_rio_cuarto",
 ]
 
+''' Los html tags son las reglas o patrones de busqueda que se usan para beautifullsoup. Ejemplo:
+<div class="columnista">
+  <a href="nota1.html">Nota 1</a>
+</div>
+<h2><a href="nota2.html">Nota 2</a></h2>
+----------------------------------------------
+soup.select("div.columnista a")
+lo que encontro: <a href="nota1.html">Nota 1</a>
+'''
 HTML_TAGS = [
     ["div.columnista a", "h2 a", "h3 a"],
     ["h2 a", "h1 a"],
@@ -113,8 +122,8 @@ def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elem
     print(url.split("-"))
     return len(url.split("-")) ##no se si deberia 1 
 
-
-def create_tag(url):
+#se fija si el link tiene palabras claves
+def create_tags(url):
     """esta funcion crea tags a partir del link, ejemplo:
     create_tag("https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/casas-paro-noticia123")
     devuelve: "paro"
@@ -133,13 +142,34 @@ def create_tag(url):
 # ejemplo de uso create tag, CREO QUE ESTA MAL, FIJARSE QUE ONDA CON LAS EXPRESIONES REGULARES
 ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123"
 print("EJEMPLO DE CREATE TAG")
-print(create_tag(ejemplo))
+print(create_tags(ejemplo))
 
 print("FIN DEL EJEMPLO DE CREATE TAG")
 url = "https://www.laizquierdadiario.com/huelga-Trabajadores-en-huelga-por-mejores-salarios-paro"
-print(create_tag(url))
+print(create_tags(url))
 
 def crear_enlaces(diario, html_tags):
+    """ Crea un Dataframe  con las fechas, los diarios, los links, la seccion, el tamanio del link y las palabras claves """
+    links = []
+    for tag in html_tags:
+        links.extend(get_scraping_links(diario, tag))
+    links = list(set(links))  # Elimina duplicados
+    print(f"[INFO] {len(links)} enlaces encontrados en {diario}")
+    data = []
+    for link in links:
+        data.append({
+            "fecha": date.today(),
+            "diario": diario,
+            "link": link,
+            "seccion": extraer_seccion(link),
+            "tamanio_link": link_length(link), #fijarse bien luego esto
+            "palabras_claves": create_tags(link) #fijarse bien que onda esto con el caso paro o paros
+        })
+    df = pd.DataFrame(data)
+    print(" se creo que dataframe para {diario}")
+    print("este es el famoso Dataframe: ")
+    print(df)
+    return df
 
 
 #FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
@@ -150,6 +180,8 @@ def crear_enlaces(diario, html_tags):
 ##################################################################################################################
 #for i, diario in enumerate(DIARIOS):
  #   df = crear_enlaces(diario, HTML_TAGS[i])
+
+
 
 
 
