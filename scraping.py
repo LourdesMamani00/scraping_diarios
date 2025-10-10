@@ -118,8 +118,6 @@ def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elem
     devuelve: 3 donde  es la cantidad de palabras en la seccion del link que es noticia123 extra paro"
     """
     url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
-    print("Holiiiiiiiiiiiiiiiiis")
-    print(url.split("-"))
     return len(url.split("-")) ##no se si deberia 1 
 print("FIN DE LINK LENGTH")
 link = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro"
@@ -175,6 +173,11 @@ def crear_enlaces(diario, html_tags):
     print(df)
     return df
 
+diario = "https://www.laizquierdadiario.com/"
+html_tags = ["div.columnista a", "h2 a", "h3 a"]
+df = crear_enlaces(diario, html_tags)
+print(df.head())
+
 
 #FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
 
@@ -184,6 +187,9 @@ def crear_enlaces(diario, html_tags):
 ##################################################################################################################
 #for i, diario in enumerate(DIARIOS):
  #   df = crear_enlaces(diario, HTML_TAGS[i])
+   # if df.empty:
+  #          continue
+
 
 
 
