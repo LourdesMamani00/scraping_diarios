@@ -157,6 +157,16 @@ def crear_enlaces(diario, html_tags):
         links.extend(get_scraping_links(diario, tag))
     links = list(set(links))  # Elimina duplicados
     print(f"[INFO] {len(links)} enlaces encontrados en {diario}")
+    '''
+    if "laizquierdadiario.com" in diario:
+        provincia = "Cordoba"
+        filtro_url = f"laizquierdadiario.com/{provincia}"
+        links_filtrados = [link for link in links if filtro_url in link]
+
+        print(f"[INFO] {len(links_filtrados)} enlaces encontrados de {provincia} en {diario}")
+
+        links = links_filtrados
+    '''
     data = []
     for link in links:
         data.append({
@@ -173,8 +183,10 @@ def crear_enlaces(diario, html_tags):
     print(df)
     return df
 
-diario = "https://www.laizquierdadiario.com/"
-html_tags = ["div.columnista a", "h2 a", "h3 a"]
+#diario = "https://www.laizquierdadiario.com/"
+diario = "https://www.lavoz.com.ar/"
+#html_tags = ["div.columnista a", "h2 a", "h3 a"]
+html_tags = ["h2 a", "h1 a, articlea a"]
 df = crear_enlaces(diario, html_tags)
 print(df.head())
 
