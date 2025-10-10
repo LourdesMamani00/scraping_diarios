@@ -112,17 +112,21 @@ def extraer_seccion(url): #preguntar luego si es correcto
 
 
 #TENER CUIDAdo con esto
-#fijarse bien luego, este siempre devuelve el ultimo elemento del link
+#fijarse bien luego, este siempre devuelve el ultimo elemento del link o los ultimos elementos del link
 def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elemento del link
-    """esta funcion devuelve la cantidad de palabras en el link, ejemplo: link_length("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
-    devuelve: 1 donde 1 es la cantidad de palabras en la seccion del link que es noticia123"
+    """esta funcion devuelve la cantidad de palabras en el link, ejemplo: link_length("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro")
+    devuelve: 3 donde  es la cantidad de palabras en la seccion del link que es noticia123 extra paro"
     """
     url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
     print("Holiiiiiiiiiiiiiiiiis")
     print(url.split("-"))
     return len(url.split("-")) ##no se si deberia 1 
+print("FIN DE LINK LENGTH")
+link = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro"
+print(link_length(link))
+print("FIN DE LINK LENGTH")
 
-#se fija si el link tiene palabras claves
+#se fija si el link tiene palabras claves, posiblemente cambiar nombre de funcion, tal vez deberia retornar NA para checkear?
 def create_tags(url):
     """esta funcion crea tags a partir del link, ejemplo:
     create_tag("https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/casas-paro-noticia123")

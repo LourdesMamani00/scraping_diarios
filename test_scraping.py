@@ -1,4 +1,4 @@
-from scraping import get_scraping_links, extraer_seccion, link_length, create_tag
+from scraping import get_scraping_links, extraer_seccion, link_length, create_tags
 
 
 # test para saber si la funcion get_scraping_links funciona correctamente, pasa el test
@@ -34,27 +34,28 @@ def test_extraer_seccion():
 def test_link_length(): #hay algo raro aca
     
     url1 = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-PARO"
-    url2 = "https://www.laizquierdadiario.com/Nacional/noticia456"
+    url2 = "https://www.laizquierdadiario.com/Nacional/noticia456-paro-trabajadores"
     url3 = "https://www.laizquierdadiario.com/Internacional/noticia789"
-    url4 = "https://www.laizquierdadiario.com/noticia000"
+    url4 = "https://www.laizquierdadiario.com/noticia000-barro-blanco-jm-vasconcelos"
     url5 = "https://www.laizquierdadiario.com/Seccion-Con-Muchas-Palabras/noticia999"
     print("LLEGUE ACA")
-    print(link_length(url5))
-    assert link_length(url2) == 1, "Error en el cálculo de la longitud del enlace para url2" #NO DEBERIA DAR 1
+    print(link_length(url1))
+    assert link_length(url1) == 2, "Error en el cálculo de la longitud del enlace para url1" #NO DEBERIA DAR 1
+    assert link_length(url2) == 3, "Error en el cálculo de la longitud del enlace para url2"
     assert link_length(url3) == 1, "Error en el cálculo de la longitud del enlace para url3"
-    assert link_length(url4) == 1, "Error en el cálculo de la longitud del enlace para url4"
+    assert link_length(url4) == 5, "Error en el cálculo de la longitud del enlace para url4"
     assert link_length(url5) == 1, "Error en el cálculo de la longitud del enlace para url5"
     print(link_length(url5))
 
-def test_create_tag():
+def test_create_tags():
     url1 = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/noticia123"
     url2 = "https://www.laizquierdadiario.com/Nacional/paro-noticia456"
     url3 = "https://www.laizquierdadiario.com/Internacional/noticia789-trabajadores-en-huelga"
     url4 = "https://www.laizquierdadiario.com/noticia000"
     url5 = "https://www.laizquierdadiario.com/Seccion-Con-Muchas-Palabras/noticia999-banco-a-lxs-trabajadores-de-la-economia-populares"
 
-    assert create_tag(url1) == ""
-    assert create_tag(url2) == "paro", "Error en la creación de tags para url2"
-    assert create_tag(url3) == "trabajadores huelga", "Error en la creación de tags para url3"
-    assert create_tag(url4) == " ", "Error en la creación de tags para url4"
-    assert create_tag(url5) == "trabajadores de la economia popular", "Error en la creación de tags para url5"
+    assert create_tags(url1) == ""
+    assert create_tags(url2) == "paro", "Error en la creación de tags para url2"
+    assert create_tags(url3) == "trabajadores huelga", "Error en la creación de tags para url3"
+    assert create_tags(url4) == "", "Error en la creación de tags para url4"
+    assert create_tags(url5) == "trabajadores economia popular", "Error en la creación de tags para url5"
