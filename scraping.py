@@ -161,7 +161,7 @@ def crear_enlaces(diario, html_tags):
         links.extend(get_scraping_links(diario, tag))
     links = list(set(links))  # Elimina duplicados
     print(f"[INFO] {len(links)} enlaces encontrados en {diario}")
-    '''
+    
     if "laizquierdadiario.com" in diario:
         provincia = "Cordoba"
         filtro_url = f"laizquierdadiario.com/{provincia}"
@@ -170,7 +170,7 @@ def crear_enlaces(diario, html_tags):
         print(f"[INFO] {len(links_filtrados)} enlaces encontrados de {provincia} en {diario}")
 
         links = links_filtrados
-    '''
+    
     data = []
     for link in links:
         data.append({
