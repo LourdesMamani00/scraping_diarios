@@ -58,7 +58,7 @@ lo que encontro: <a href="nota1.html">Nota 1</a>
 HTML_TAGS = [
     ["div.columnista a", "h2 a", "h3 a"],
     ["h2 a", "h1 a", "article a", "main article seccion h1", "div article a", "article a"],
-    ["a"],
+    ["a"], #"main seccion div article a", "article a"
     ["h2 a"],
     ["div a"],
     ["h1 a", "h2 a", "h3 a"],
@@ -105,7 +105,7 @@ def extraer_seccion(url): #preguntar luego si es correcto
     ''' esta funcion extrae la seccion del link, ejemplo: extract section("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
     Devuelve: "provincia-de-buenos-aires" . Si no encuentra la seccion devuelve "NA"'''
     url = url.lower()
-    match = re.search(r'\.com(?:\.ar)?/([^/]+)/', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
+    match = re.search(r'\.com(?:\.ar)?/([^/]+)/?', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
     #print(match)
     print(match.group(1) if match else "NA")
     return match.group(1) if match else "NA" #si encuentra el patron devuelve el primer elemento del grupo, sino NA
@@ -189,9 +189,13 @@ def crear_enlaces(diario, html_tags):
     return df
 
 #diario = "https://www.laizquierdadiario.com/"
-diario = "https://www.lavoz.com.ar/"
 #html_tags = ["div.columnista a", "h2 a", "h3 a"]
-html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
+
+#diario = "https://www.lavoz.com.ar/"
+#html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
+#en la voz de san justo no tienen "seccion como tal, tiene otra forma de definir los links por "seccion""
+diario = "https://www.lavozdesanjusto.com.ar/"
+html_tags = ["a", "main seccion div article a", "article a"]
 df = crear_enlaces(diario, html_tags)
 # Mostrar solo las filas donde 'palabras_claves' no está vacía
 df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
