@@ -15,7 +15,7 @@ from urllib.parse import urljoin # unir urls relativas con absolutas
 
 #palabras claves FIJARSE BIEN LUEGO \sate\s O PARO
 PALABRAS_CLAVES = re.compile(
-    r'paro[a-zA-Z]*|paran|asamblea|huelga|marcha|cortes? de ruta|cortan ruta|corte? de calle|cortan calle|'
+    r'paro[a-zA-Z]*|paran|asambleas?|huelga|marcha|cortes? de ruta|cortan ruta|corte? de calle|cortan calle|'
     r'trabaj[a-zA-Z]*|sindica[a-zA-Z]*|paritari[a-zA-Z]*|gremi[a-zA-Z]*|cgt|'
     r'\suta\s|\sate\s|luz y fuerza|uepc|\ssep\s|\sutep\s|surrbac|economia popular|economia informal|'
     r'conflicto|despid[a-zA-Z]*|salar[a-zA-Z]*|transporte|aguinaldo|sueldo|bancaria|'
@@ -57,7 +57,7 @@ lo que encontro: <a href="nota1.html">Nota 1</a>
 '''
 HTML_TAGS = [
     ["div.columnista a", "h2 a", "h3 a"],
-    ["h2 a", "h1 a"],
+    ["h2 a", "h1 a", "article a", "main article seccion h1", "div article a", "article a"],
     ["a"],
     ["h2 a"],
     ["div a"],
@@ -105,12 +105,14 @@ def extraer_seccion(url): #preguntar luego si es correcto
     ''' esta funcion extrae la seccion del link, ejemplo: extract section("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
     Devuelve: "provincia-de-buenos-aires" . Si no encuentra la seccion devuelve "NA"'''
     url = url.lower()
-    match = re.search(r'\.com/([^/]+)/', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
-    print(match)
+    match = re.search(r'\.com(?:\.ar)?/([^/]+)/', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
+    #print(match)
     print(match.group(1) if match else "NA")
     return match.group(1) if match else "NA" #si encuentra el patron devuelve el primer elemento del grupo, sino NA
-
-
+print("extraer seccion:")
+link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
+extraer_seccion(link)
+print("FIN DE EXTRAER SECCION")
 #TENER CUIDAdo con esto
 #fijarse bien luego, este siempre devuelve el ultimo elemento del link o los ultimos elementos del link
 def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elemento del link
@@ -142,8 +144,10 @@ def create_tags(url):
 
 
 # ejemplo de uso create tag, CREO QUE ESTA MAL, FIJARSE QUE ONDA CON LAS EXPRESIONES REGULARES
-ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123"
+#ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123/"
+ejemplo= "https://www.lavoz.com.ar/ciudadanos/transporte-urbano-de-cordoba-podria-haber-asambleas-la-semana-proxima/"
 print("EJEMPLO DE CREATE TAG")
+print("este es el ejemplo: ")
 print(create_tags(ejemplo))
 
 print("FIN DEL EJEMPLO DE CREATE TAG")
@@ -171,24 +175,31 @@ def crear_enlaces(diario, html_tags):
     for link in links:
         data.append({
             "fecha": date.today(),
-            "diario": diario,
+            #"diario": diario,
             "link": link,
-            "seccion": extraer_seccion(link),
-            "tamanio_link": link_length(link), #fijarse bien luego esto
-            "palabras_claves": create_tags(link) #fijarse bien que onda esto con el caso paro o paros
+            "seccion": extraer_seccion(link), #devuelve la seccion del link o NA
+            "tamanio_link": link_length(link), #devuelve la cantidad de palabras que vienen luego de la seccion
+            "palabras_claves": create_tags(link) #devuelve la palabra clave encontrada en el link, fijarse que onda con la palabra claave paro
         })
     df = pd.DataFrame(data)
     print(" se creo que dataframe para {diario}")
     print("este es el famoso Dataframe: ")
-    print(df)
+   
+    #print(df)
     return df
 
 #diario = "https://www.laizquierdadiario.com/"
 diario = "https://www.lavoz.com.ar/"
 #html_tags = ["div.columnista a", "h2 a", "h3 a"]
-html_tags = ["h2 a", "h1 a, articlea a"]
+html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
 df = crear_enlaces(diario, html_tags)
-print(df.head())
+# Mostrar solo las filas donde 'palabras_claves' no está vacía
+df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
+print(df_filtrado)
+
+#print(df.head(60))
+
+#print(df.head())
 
 
 #FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
