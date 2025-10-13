@@ -193,9 +193,19 @@ def crear_enlaces(diario, html_tags):
 
 #diario = "https://www.lavoz.com.ar/"
 #html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
+
 #en la voz de san justo no tienen "seccion como tal, tiene otra forma de definir los links por "seccion""
-diario = "https://www.lavozdesanjusto.com.ar/"
-html_tags = ["a", "main seccion div article a", "article a"]
+#diario = "https://www.lavozdesanjusto.com.ar/"
+#html_tags = ["a", "main seccion div article a", "article a"]
+
+#diario = "https://www.eldiariocba.com.ar/"
+#html_tags = ["h2 a"] #div article div a
+
+#diario = "https://www.cba24n.com.ar/"
+#html_tags = ["div a"]
+
+diario =     "https://www.puntal.com.ar/"
+html_tags = ["h1 a", "h2 a", "h3 a", "figure a"] #div article figure a
 df = crear_enlaces(diario, html_tags)
 # Mostrar solo las filas donde 'palabras_claves' no está vacía
 df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
