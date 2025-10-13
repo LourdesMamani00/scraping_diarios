@@ -224,8 +224,8 @@ def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
             print(f"[WARN] No se pudo acceder a {url} - Código {resp.status_code}")
             return None, None
         soup = BeautifulSoup(resp.text, 'html.parser')
-        titulo = " ".join([t.get_text(strip=True) for t in soup.select(tag_titulo)])
-        contenido = " ".join([p.get_text(strip=True) for p in soup.select(tag_nota)])
+        titulo = " ".join([t.get_text(strip=True) for t in soup.select(etiqueta_titulo)])
+        contenido = " ".join([p.get_text(strip=True) for p in soup.select(etiqueta_nota)])
         return titulo.strip(), contenido.strip()
     except Exception:
         return None, None
