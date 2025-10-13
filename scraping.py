@@ -65,12 +65,12 @@ HTML_TAGS = [
 ]
 
 #VER BIEN LUEGO QUE ONDA CON ESTO
-TAG_TITULOS = [
+ETIQUIETA_TITULOS = [
     ['h1'], ['h1'], ['article h1'], ['article h1'], ['article h1'], ['article h1']
 ]
 
 #VER BIEN LUEGO QUE ONDA CON ESTO
-TAG_NOTAS = [
+ETIQUETA_NOTAS = [
     ['div p'], ['article p'], ['div p'], ['div p'], ['div p'], ['div p']
 ]
 
@@ -175,14 +175,14 @@ def crear_enlaces(diario, html_tags):
     for link in links:
         data.append({
             "fecha": date.today(),
-            #"diario": diario,
+            "diario": diario,
             "link": link,
             "seccion": extraer_seccion(link), #devuelve la seccion del link o NA
             "tamanio_link": link_length(link), #devuelve la cantidad de palabras que vienen luego de la seccion
             "palabras_claves": create_tags(link) #devuelve la palabra clave encontrada en el link, fijarse que onda con la palabra claave paro
         })
     df = pd.DataFrame(data)
-    print(" se creo que dataframe para {diario}")
+    print(f"se creo que dataframe para {diario}")
     print("este es el famoso Dataframe: ")
    
     #print(df)
@@ -191,29 +191,45 @@ def crear_enlaces(diario, html_tags):
 #diario = "https://www.laizquierdadiario.com/"
 #html_tags = ["div.columnista a", "h2 a", "h3 a"]
 
-#diario = "https://www.lavoz.com.ar/"
-#html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
+# diario = "https://www.lavoz.com.ar/"
+# html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
 
 #en la voz de san justo no tienen "seccion como tal, tiene otra forma de definir los links por "seccion""
-#diario = "https://www.lavozdesanjusto.com.ar/"
-#html_tags = ["a", "main seccion div article a", "article a"]
+# diario = "https://www.lavozdesanjusto.com.ar/"
+# html_tags = ["a", "main seccion div article a", "article a"]
 
-#diario = "https://www.eldiariocba.com.ar/"
-#html_tags = ["h2 a"] #div article div a
+# diario = "https://www.eldiariocba.com.ar/"
+# html_tags = ["h2 a"] #div article div a
 
-#diario = "https://www.cba24n.com.ar/"
-#html_tags = ["div a"]
+# diario = "https://www.cba24n.com.ar/"
+# html_tags = ["div a"]
 
-diario =     "https://www.puntal.com.ar/"
-html_tags = ["h1 a", "h2 a", "h3 a", "figure a"] #div article figure a
-df = crear_enlaces(diario, html_tags)
-# Mostrar solo las filas donde 'palabras_claves' no está vacía
-df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
-print(df_filtrado)
+# diario =     "https://www.puntal.com.ar/"
+# html_tags = ["h1 a", "h2 a", "h3 a", "figure a"] #div article figure a
+# df = crear_enlaces(diario, html_tags)
+# # Mostrar solo las filas donde 'palabras_claves' no está vacía
+# df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
+# print(df_filtrado)
 
 #print(df.head(60))
 
 #print(df.head())
+
+def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
+    """Obtiene el título y el contenido de una noticia dada su URL y las etiquetas HTML correspondientes."""
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code != 200:
+            print(f"[WARN] No se pudo acceder a {url} - Código {resp.status_code}")
+            return None, None
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        titulo = " ".join([t.get_text(strip=True) for t in soup.select(tag_titulo)])
+        contenido = " ".join([p.get_text(strip=True) for p in soup.select(tag_nota)])
+        return titulo.strip(), contenido.strip()
+    except Exception:
+        return None, None
+        
 
 
 #FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
@@ -222,13 +238,38 @@ print(df_filtrado)
 ##################################################################################################################
 #   FUNCION PRINCIPAL O SCRAPING PRINCIPAL
 ##################################################################################################################
-for i, diario in enumerate(DIARIOS):
-    df = crear_enlaces(diario, HTML_TAGS[i])
-    if df.empty: 
-        continue
-   
-    df = df[df["tamanio_link"] > 3]
 
+# for i, diario in enumerate(DIARIOS):
+#     #obtiene los enlaces y los pone en un dataframe
+#     df_sin_filtro = crear_enlaces(diario, HTML_TAGS[i])
+#     if df_sin_filtro.empty: 
+#         continue
+#     #primero filtra los enlaces, si tiene palabras claves las guarda en el dataframe y sino tiene las quita, despues excluye las secciones que no interesan
+#     df = df_sin_filtro[df_sin_filtro["palabras_claves"].notna() & (df_sin_filtro["palabras_claves"] != "")]
+#     df = df[df["tamanio_link"] > 3] #VER ESTO LUEGO
+
+#     if "lavoz.com.ar" in diario:
+#         excluir = ['avisos', 'vos', 'NA', 'deportes', 'espacio-de-marca', 'espacio-publicidad', 'tendencias']
+#     elif "lavozdesanjusto.com.ar" in diario:
+#         excluir = ['NA','suplementos']
+#     elif "eldiariocba.com.ar" in diario:
+#         excluir = ['culturales','el-equipo','espacio-patrocinado']
+#     elif "cba24n.com.ar" in diario:
+#         excluir = ['deportes','tecnologia','espectaculos','programa','contenido-de-marca','vamos-al-movil']
+#     else:
+#         excluir = []
+
+#     df = df[~df['seccion'].isin(excluir)]
+#     #print(f"[INFO] {len(df_sin_filtro)} enlaces obtenidos de {diario}")
+#     #print(f"[INFO] {len(df)} enlaces con palabras clave")
+
+#     #obtiene los titulos y el contenido de los links con palabras claves
+#     etiqueta = ETIQUIETA_TITULOS[i]
+#     nota_etiqueta = ETIQUETA_NOTAS[i]
+#     df["titulo"] = None
+#     df["contenido"] = None
+
+#     for idx, row in df.iterrows():   
 
 
 
@@ -238,6 +279,7 @@ for i, diario in enumerate(DIARIOS):
 texto = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/noticia123"
 print(create_tag(texto))
 """
+
 """""
 # URL que queremos analizar
 pagina = "https://www.laizquierdadiario.com/"
@@ -266,7 +308,7 @@ textos= [
 for t in textos:
     if PALABRAS_CLAVES.search(t):
         print("Coincidencia:", t)
-        """
+"""
 # funcion para obtener los links, se usa en crate_links
 # def get_scraping_links():
 
