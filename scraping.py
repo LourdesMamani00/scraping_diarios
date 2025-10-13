@@ -107,7 +107,7 @@ def extraer_seccion(url): #preguntar luego si es correcto
     url = url.lower()
     match = re.search(r'\.com(?:\.ar)?/([^/]+)/?', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
     #print(match)
-    print(match.group(1) if match else "NA")
+    #print(match.group(1) if match else "NA")
     return match.group(1) if match else "NA" #si encuentra el patron devuelve el primer elemento del grupo, sino NA
 print("extraer seccion:")
 link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
@@ -222,10 +222,12 @@ print(df_filtrado)
 ##################################################################################################################
 #   FUNCION PRINCIPAL O SCRAPING PRINCIPAL
 ##################################################################################################################
-#for i, diario in enumerate(DIARIOS):
- #   df = crear_enlaces(diario, HTML_TAGS[i])
-   # if df.empty:
-  #          continue
+for i, diario in enumerate(DIARIOS):
+    df = crear_enlaces(diario, HTML_TAGS[i])
+    if df.empty: 
+        continue
+   
+    df = df[df["tamanio_link"] > 3]
 
 
 
