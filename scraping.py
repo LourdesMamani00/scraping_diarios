@@ -4,10 +4,12 @@ import pandas as pd # para analizar y manejar datitos,
 import re # sirve para buscar, validar y limpiar textos, para expresiones regulares, es rapido
 from datetime import date, datetime #fechas
 from urllib.parse import urljoin # unir urls relativas con absolutas
+import os #para manejar archivos y directorios
 
 #########################################################################################################
 #   CONFIGURACIONES INICIALES
 ########################################################################################################
+# INSTALAR: pip install openpyxl
 
 ########################################
 # 1. PALABRAS CLAVES
@@ -27,6 +29,8 @@ PALABRAS_CLAVES = re.compile(
 #########################################
 # 2. DIARIOS, CARPETAS Y ETIQUETAS (PARAMETROS DE LOS DIARIOS)
 #########################################
+
+A_PRUEBA_DE_NOTICIAS_LARGAS = "truncar"  # o "gencsv"
 
 DIARIOS = [
     "https://www.laizquierdadiario.com/",
@@ -145,6 +149,7 @@ def create_tags(url):
 
 # ejemplo de uso create tag, CREO QUE ESTA MAL, FIJARSE QUE ONDA CON LAS EXPRESIONES REGULARES
 #ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123/"
+'''
 ejemplo= "https://www.lavoz.com.ar/ciudadanos/transporte-urbano-de-cordoba-podria-haber-asambleas-la-semana-proxima/"
 print("EJEMPLO DE CREATE TAG")
 print("este es el ejemplo: ")
@@ -153,6 +158,8 @@ print(create_tags(ejemplo))
 print("FIN DEL EJEMPLO DE CREATE TAG")
 url = "https://www.laizquierdadiario.com/huelga-Trabajadores-en-huelga-por-mejores-salarios-paro"
 print(create_tags(url))
+'''
+#----------------------------------------------------------------------
 
 def crear_enlaces(diario, html_tags):
     """ Crea un Dataframe  con las fechas, los diarios, los links, la seccion, el tamanio del link y las palabras claves """
@@ -191,8 +198,8 @@ def crear_enlaces(diario, html_tags):
 #diario = "https://www.laizquierdadiario.com/"
 #html_tags = ["div.columnista a", "h2 a", "h3 a"]
 
-# diario = "https://www.lavoz.com.ar/"
-# html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
+#diario = "https://www.lavoz.com.ar/"
+#html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
 
 #en la voz de san justo no tienen "seccion como tal, tiene otra forma de definir los links por "seccion""
 # diario = "https://www.lavozdesanjusto.com.ar/"
@@ -206,10 +213,11 @@ def crear_enlaces(diario, html_tags):
 
 # diario =     "https://www.puntal.com.ar/"
 # html_tags = ["h1 a", "h2 a", "h3 a", "figure a"] #div article figure a
-# df = crear_enlaces(diario, html_tags)
+
+#df = crear_enlaces(diario, html_tags)
 # # Mostrar solo las filas donde 'palabras_claves' no está vacía
-# df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
-# print(df_filtrado)
+#df_filtrado = df[df["palabras_claves"].notna() & (df["palabras_claves"] != "")]
+#print(df_filtrado)
 
 #print(df.head(60))
 
@@ -230,6 +238,13 @@ def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
     except Exception:
         return None, None
         
+#la voz del interior
+# url = "https://www.lavoz.com.ar/servicios/bono-de-100000-para-jubilados-cordobeses-cuando-se-paga-y-a-quienes-les-corresponde/"
+# etiqueta_titulo = 'h1'
+# etiqueta_nota = 'article p'
+# titulo, contenido = obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota)
+# print("Titulo:", titulo)
+# print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
 
 
 #FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
@@ -239,38 +254,56 @@ def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
 #   FUNCION PRINCIPAL O SCRAPING PRINCIPAL
 ##################################################################################################################
 
-# for i, diario in enumerate(DIARIOS):
-#     #obtiene los enlaces y los pone en un dataframe
-#     df_sin_filtro = crear_enlaces(diario, HTML_TAGS[i])
-#     if df_sin_filtro.empty: 
-#         continue
-#     #primero filtra los enlaces, si tiene palabras claves las guarda en el dataframe y sino tiene las quita, despues excluye las secciones que no interesan
-#     df = df_sin_filtro[df_sin_filtro["palabras_claves"].notna() & (df_sin_filtro["palabras_claves"] != "")]
-#     df = df[df["tamanio_link"] > 3] #VER ESTO LUEGO
+for i, diario in enumerate(DIARIOS):
+    #obtiene los enlaces y los pone en un dataframe
+    df_sin_filtro = crear_enlaces(diario, HTML_TAGS[i])
+    if df_sin_filtro.empty: 
+        continue
+    #primero filtra los enlaces, si tiene palabras claves las guarda en el dataframe y sino tiene las quita, despues excluye las secciones que no interesan
+    df = df_sin_filtro[df_sin_filtro["palabras_claves"].notna() & (df_sin_filtro["palabras_claves"] != "")]
+    df = df[df["tamanio_link"] > 3] #VER ESTO LUEGO
 
-#     if "lavoz.com.ar" in diario:
-#         excluir = ['avisos', 'vos', 'NA', 'deportes', 'espacio-de-marca', 'espacio-publicidad', 'tendencias']
-#     elif "lavozdesanjusto.com.ar" in diario:
-#         excluir = ['NA','suplementos']
-#     elif "eldiariocba.com.ar" in diario:
-#         excluir = ['culturales','el-equipo','espacio-patrocinado']
-#     elif "cba24n.com.ar" in diario:
-#         excluir = ['deportes','tecnologia','espectaculos','programa','contenido-de-marca','vamos-al-movil']
-#     else:
-#         excluir = []
+    if "lavoz.com.ar" in diario:
+        excluir = ['avisos', 'vos', 'NA', 'deportes', 'espacio-de-marca', 'espacio-publicidad', 'tendencias']
+    elif "lavozdesanjusto.com.ar" in diario:
+        excluir = ['NA','suplementos']
+    elif "eldiariocba.com.ar" in diario:
+        excluir = ['culturales','el-equipo','espacio-patrocinado']
+    elif "cba24n.com.ar" in diario:
+        excluir = ['deportes','tecnologia','espectaculos','programa','contenido-de-marca','vamos-al-movil']
+    else:
+        excluir = []
 
-#     df = df[~df['seccion'].isin(excluir)]
-#     #print(f"[INFO] {len(df_sin_filtro)} enlaces obtenidos de {diario}")
-#     #print(f"[INFO] {len(df)} enlaces con palabras clave")
+    df = df[~df['seccion'].isin(excluir)]
+    #print(f"[INFO] {len(df_sin_filtro)} enlaces obtenidos de {diario}")
+    #print(f"[INFO] {len(df)} enlaces con palabras clave")
 
-#     #obtiene los titulos y el contenido de los links con palabras claves
-#     etiqueta = ETIQUIETA_TITULOS[i]
-#     nota_etiqueta = ETIQUETA_NOTAS[i]
-#     df["titulo"] = None
-#     df["contenido"] = None
+    #obtiene los titulos y el contenido de los links con palabras claves
+    etiqueta = ETIQUIETA_TITULOS[i]
+    nota_etiqueta = ETIQUETA_NOTAS[i]
+    df["titulo"] = None
+    df["contenido"] = None
+    #rellena el df
+    for idx, row in df.iterrows():   
+        titulo, contenido = obtener_titulo_y_contenido(row["link"], etiqueta, nota_etiqueta)
+        df.at[idx, "titulo"] = titulo
+        df.at[idx, "contenido"] = contenido
 
-#     for idx, row in df.iterrows():   
+    df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
 
+    if A_PRUEBA_DE_NOTICIAS_LARGAS == "truncar":
+        df["contenido"] = df["contenido"].str.slice(0, 32767)
+
+    fecha = date.today().strftime("%Y%m%d")
+    filename = f"{fecha}_scraping_{CARPETAS[i]}"
+    os.makedirs(CARPETAS[i], exist_ok=True)
+
+    if A_PRUEBA_DE_NOTICIAS_LARGAS == "gencsv":
+        df.to_csv(f"{CARPETAS[i]}/{filename}.csv", index=False)
+    else:
+        df.to_excel(f"{CARPETAS[i]}/{filename}.xlsx", index=False)
+
+    print(f"[OK] Guardado archivo para {CARPETAS[i]} ({len(df)} noticias con palabras clave)")
 
 
 
