@@ -1,6 +1,6 @@
 # Proyecto de Análisis de Datos
 
-Este proyecto utiliza **Python** y la librería **pandas** para analizar y manipular datos.  
+Este proyecto utiliza **Python** y la librería **pandas** para analizar y manipular datos, asi como tambien las librerias os, BeautifulSoup y Newspaper3k.  
 A continuación se detallan los pasos necesarios para instalar las dependencias y ejecutar el proyecto.
 
 ---
@@ -37,7 +37,10 @@ py -m pip install --user pandas
 ```bash
 python scraping.py
 ```
-
+## Para poder usar la libreria os (maneja archivos y directorios) instalar:
+```bash
+pip install openpyxl
+```
 ## Para correr los tests instalar pytest y ejecutar:
 ```bash
  pytest test_scraping.py
