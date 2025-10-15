@@ -41,6 +41,11 @@ python scraping.py
 ```bash
 pip install openpyxl
 ```
+## Para poder usar la libreria newspaper3k (parsea y devuelve la informacion que solicitemos del articulo) instalar:
+```bash
+pip3 install newspaper3k
+```
+
 ## Para correr los tests instalar pytest y ejecutar:
 ```bash
  pytest test_scraping.py
