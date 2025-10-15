@@ -69,16 +69,6 @@ HTML_TAGS = [
     ["h1 a", "h2 a", "h3 a"],
 ]
 
-#VER BIEN LUEGO QUE ONDA CON ESTO
-ETIQUIETA_TITULOS = [
-    ['h1'], ['h1'], ['article h1'], ['article h1'], ['article h1'], ['article h1']
-]
-
-#VER BIEN LUEGO QUE ONDA CON ESTO
-ETIQUETA_NOTAS = [
-    ['div p'], ['article p'], ['div p'], ['div p'], ['div p'], ['div p']
-]
-
 ####################################################################################################################
 # FUNCIONES AUXILIARES
 ##################################################################################################################
@@ -224,7 +214,7 @@ def crear_enlaces(diario, html_tags):
 
 #print(df.head())
 
-def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
+def obtener_titulo_y_contenido(url):
     """Obtiene el título y el contenido de una noticia dada su URL y las etiquetas HTML correspondientes."""
     try:
         articulo = Article(url)
@@ -232,7 +222,8 @@ def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
         articulo.parse()
         return articulo.title, articulo.text
     except Exception as e:
-        return Null, Null       
+        return None, None   
+        
 #la voz del interior
 # url = "https://www.lavoz.com.ar/servicios/bono-de-100000-para-jubilados-cordobeses-cuando-se-paga-y-a-quienes-les-corresponde/"
 # etiqueta_titulo = 'h1'
@@ -240,9 +231,6 @@ def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
 # titulo, contenido = obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota)
 # print("Titulo:", titulo)
 # print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
-
-
-#FALTA LA FUNCION CREAR ENLACES Y LA DE RELLENAR DATOS O OBTENER TITULOS Y CONTENIDOS
 
 
 ##################################################################################################################
@@ -274,13 +262,11 @@ for i, diario in enumerate(DIARIOS):
     #print(f"[INFO] {len(df)} enlaces con palabras clave")
 
     #obtiene los titulos y el contenido de los links con palabras claves
-    etiqueta = ETIQUIETA_TITULOS[i]
-    nota_etiqueta = ETIQUETA_NOTAS[i]
     df["titulo"] = None
     df["contenido"] = None
     #rellena el df
     for idx, row in df.iterrows():   
-        titulo, contenido = obtener_titulo_y_contenido(row["link"], etiqueta, nota_etiqueta)
+        titulo, contenido = obtener_titulo_y_contenido(row["link"])
         df.at[idx, "titulo"] = titulo
         df.at[idx, "contenido"] = contenido
 
