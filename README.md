@@ -33,10 +33,6 @@ O, si tienes el lanzador de Python (py):
 ```bash
 py -m pip install --user pandas
 ```
-## Como ejecutar el proyecto:
-```bash
-python scraping.py
-```
 ## Para poder usar la libreria os (maneja archivos y directorios) instalar:
 ```bash
 pip install openpyxl
@@ -44,6 +40,12 @@ pip install openpyxl
 ## Para poder usar la libreria newspaper3k (parsea y devuelve la informacion que solicitemos del articulo) instalar:
 ```bash
 pip3 install newspaper3k
+```
+------------------------------------------------------------------
+
+## Como ejecutar el proyecto:
+```bash
+python scraping.py
 ```
 
 ## Para correr los tests instalar pytest y ejecutar:
