@@ -5,6 +5,7 @@ import re # sirve para buscar, validar y limpiar textos, para expresiones regula
 from datetime import date, datetime #fechas
 from urllib.parse import urljoin # unir urls relativas con absolutas
 import os #para manejar archivos y directorios
+from newspaper import Article # newspaper es para hacer scrapping de diarios
 
 #########################################################################################################
 #   CONFIGURACIONES INICIALES
@@ -225,19 +226,13 @@ def crear_enlaces(diario, html_tags):
 
 def obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota):
     """Obtiene el título y el contenido de una noticia dada su URL y las etiquetas HTML correspondientes."""
-    headers = {'User-Agent': 'Mozilla/5.0'}
     try:
-        resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code != 200:
-            print(f"[WARN] No se pudo acceder a {url} - Código {resp.status_code}")
-            return None, None
-        soup = BeautifulSoup(resp.text, 'html.parser')
-        titulo = " ".join([t.get_text(strip=True) for t in soup.select(etiqueta_titulo)])
-        contenido = " ".join([p.get_text(strip=True) for p in soup.select(etiqueta_nota)])
-        return titulo.strip(), contenido.strip()
-    except Exception:
-        return None, None
-        
+        articulo = Article(url)
+        articulo.download()
+        articulo.parse()
+        return articulo.title, articulo.text
+    except Exception as e:
+        return Null, Null       
 #la voz del interior
 # url = "https://www.lavoz.com.ar/servicios/bono-de-100000-para-jubilados-cordobeses-cuando-se-paga-y-a-quienes-les-corresponde/"
 # etiqueta_titulo = 'h1'
