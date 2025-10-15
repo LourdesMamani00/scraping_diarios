@@ -18,9 +18,9 @@ from newspaper import Article # newspaper es para hacer scrapping de diarios
 
 #palabras claves FIJARSE BIEN LUEGO \sate\s O PARO
 PALABRAS_CLAVES = re.compile(
-    r'paro[a-zA-Z]*|paran|asambleas?|huelga|marcha|cortes? de ruta|cortan ruta|corte? de calle|cortan calle|'
+    r'paro[a-zA-Z]*|paran|asambleas?|huelga|marcha|cortes? de ruta|cortan ruta|cortes? de calle|cortan calle|'
     r'trabaj[a-zA-Z]*|sindica[a-zA-Z]*|paritari[a-zA-Z]*|gremi[a-zA-Z]*|cgt|'
-    r'\suta\s|\sate\s|luz y fuerza|uepc|\ssep\s|\sutep\s|surrbac|economia popular|economia informal|'
+    r'uta|ate|luz y fuerza|uepc|sep|utep|surrbac|economia popular|economia informal|'
     r'conflicto|despid[a-zA-Z]*|salar[a-zA-Z]*|transporte|aguinaldo|sueldo|bancaria|'
     r'delegad[a-zA-Z]*|limpieza|precariza[a-zA-Z]*|cadete|repartidor[a-zA-Z]*|aplicaciones|'
     r'suspen[a-zA-Z]*|laboral[a-zA-Z]*|conciliacion|moviliz[a-zA-Z]*|ajuste|protest[a-zA-Z]*|derechos?|cortes?',
@@ -140,8 +140,8 @@ def create_tags(url):
 
 # ejemplo de uso create tag, CREO QUE ESTA MAL, FIJARSE QUE ONDA CON LAS EXPRESIONES REGULARES
 #ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123/"
-'''
-ejemplo= "https://www.lavoz.com.ar/ciudadanos/transporte-urbano-de-cordoba-podria-haber-asambleas-la-semana-proxima/"
+"""
+ejemplo= "https://www.lavoz.com.ar/ciudadanos/cortes-de-calle-utep-transporte-urbano-de-cordoba-podria-haber-asambleas-la-semana-proxima/"
 print("EJEMPLO DE CREATE TAG")
 print("este es el ejemplo: ")
 print(create_tags(ejemplo))
@@ -149,7 +149,7 @@ print(create_tags(ejemplo))
 print("FIN DEL EJEMPLO DE CREATE TAG")
 url = "https://www.laizquierdadiario.com/huelga-Trabajadores-en-huelga-por-mejores-salarios-paro"
 print(create_tags(url))
-'''
+"""
 #----------------------------------------------------------------------
 
 def crear_enlaces(diario, html_tags):
@@ -214,23 +214,41 @@ def crear_enlaces(diario, html_tags):
 
 #print(df.head())
 
-def obtener_titulo_y_contenido(url):
+def obtener_titulo_y_contenido(url, diario=None):
     """Obtiene el título y el contenido de una noticia dada su URL y las etiquetas HTML correspondientes."""
     try:
-        articulo = Article(url)
-        articulo.download()
-        articulo.parse()
-        return articulo.title, articulo.text
+        if "puntal.com.ar" in diario:
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code != 200:
+                print(f"[WARN] No se pudo acceder a {url} - Código {resp.status_code}")
+                return None, None
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            title_tag = soup.find('h1')
+            content_tags = soup.find_all('p')
+            title = title_tag.get_text(strip=True) if title_tag else None
+            content = '\n'.join(p.get_text(strip=True) for p in content_tags) if content_tags else None
+            return title, content
+        else:
+            articulo = Article(url)
+            articulo.download()
+            articulo.parse()
+            return articulo.title, articulo.text
     except Exception as e:
         return None, None   
         
 #la voz del interior
 # url = "https://www.lavoz.com.ar/servicios/bono-de-100000-para-jubilados-cordobeses-cuando-se-paga-y-a-quienes-les-corresponde/"
-# etiqueta_titulo = 'h1'
-# etiqueta_nota = 'article p'
-# titulo, contenido = obtener_titulo_y_contenido(url, etiqueta_titulo, etiqueta_nota)
+# titulo, contenido = obtener_titulo_y_contenido(url)
 # print("Titulo:", titulo)
 # print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
+
+#el puntal
+url = "https://www.puntal.com.ar/marc-marquez/marc-marquez-tuvo-que-ser-operado-nuevamente-del-hombro-derecho-y-se-pierde-el-resto-del-campeonato-n244656"
+diario = "https://www.puntal.com.ar/"
+titulo, contenido = obtener_titulo_y_contenido(url, diario)
+print("Titulo:", titulo)
+print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
 
 
 ##################################################################################################################
@@ -266,13 +284,13 @@ for i, diario in enumerate(DIARIOS):
     df["contenido"] = None
     #rellena el df
     for idx, row in df.iterrows():   
-        titulo, contenido = obtener_titulo_y_contenido(row["link"])
+        titulo, contenido = obtener_titulo_y_contenido(row["link"], diario) #hay un patron super extranio con el puntal en el link
         df.at[idx, "titulo"] = titulo
         df.at[idx, "contenido"] = contenido
 
     df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
 
-    if A_PRUEBA_DE_NOTICIAS_LARGAS == "truncar":
+    if A_PRUEBA_DE_NOTICIAS_LARGAS == "truncar": #preguntar luego por esto
         df["contenido"] = df["contenido"].str.slice(0, 32767)
 
     fecha = date.today().strftime("%Y%m%d")
@@ -285,7 +303,6 @@ for i, diario in enumerate(DIARIOS):
         df.to_excel(f"{CARPETAS[i]}/{filename}.xlsx", index=False)
 
     print(f"[OK] Guardado archivo para {CARPETAS[i]} ({len(df)} noticias con palabras clave)")
-
 
 
 
