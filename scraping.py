@@ -10,7 +10,6 @@ from newspaper import Article # newspaper es para hacer scrapping de diarios
 #########################################################################################################
 #   CONFIGURACIONES INICIALES
 ########################################################################################################
-# INSTALAR: pip install openpyxl
 
 ########################################
 # 1. PALABRAS CLAVES
@@ -18,14 +17,18 @@ from newspaper import Article # newspaper es para hacer scrapping de diarios
 
 #palabras claves FIJARSE BIEN LUEGO \sate\s O PARO
 PALABRAS_CLAVES = re.compile(
-    r'paro[a-zA-Z]*|paran|asambleas?|huelga|marcha|cortes? de ruta|cortan ruta|cortes? de calle|cortan calle|'
-    r'trabaj[a-zA-Z]*|sindica[a-zA-Z]*|paritari[a-zA-Z]*|gremi[a-zA-Z]*|cgt|'
-    r'uta|ate|luz y fuerza|uepc|sep|utep|surrbac|economia popular|economia informal|'
-    r'conflicto|despid[a-zA-Z]*|salar[a-zA-Z]*|transporte|aguinaldo|sueldo|bancaria|'
-    r'delegad[a-zA-Z]*|limpieza|precariza[a-zA-Z]*|cadete|repartidor[a-zA-Z]*|aplicaciones|'
-    r'suspen[a-zA-Z]*|laboral[a-zA-Z]*|conciliacion|moviliz[a-zA-Z]*|ajuste|protest[a-zA-Z]*|derechos?|cortes?',
+    r'\bparo[a-zA-Z]*\b|\bparan\b|\basamblea[s]?\b|\bhuelga\b|\bmarcha\b|'
+    r'\bcortes? de ruta\b|\bcortan ruta\b|\bcortes? de calle\b|\bcortan calle\b|'
+    r'\btrabaj[a-zA-Z]*\b|\bsindica[a-zA-Z]*\b|\bparitari[a-zA-Z]*\b|\bgremi[a-zA-Z]*\b|'
+    r'\bcgt\b|\buta\b|\bate\b|\bluz y fuerza\b|\buepc\b|\bsep\b|\butep\b|\bsurrbac\b|'
+    r'\beconomia popular\b|\beconomia informal\b|\bconflicto\b|\bdespid[a-zA-Z]*\b|'
+    r'\bsalar[a-zA-Z]*\b|\btransporte\b|\baguinaldo\b|\bsueldo\b|\bbancaria\b|'
+    r'\bdelegad[a-zA-Z]*\b|\blimpieza\b|\bprecariza[a-zA-Z]*\b|\bcadete\b|'
+    r'\brepartidor[a-zA-Z]*\b|\baplicaciones\b|\bsuspen[a-zA-Z]*\b|\blaboral[a-zA-Z]*\b|'
+    r'\bconciliacion\b|\bmoviliz[a-zA-Z]*\b|\bajuste\b|\bprotest[a-zA-Z]*\b|\bderechos?\b|\bcortes?\b',
     flags=re.IGNORECASE
 )
+
 #----------------------------------------------------------------------
 #########################################
 # 2. DIARIOS, CARPETAS Y ETIQUETAS (PARAMETROS DE LOS DIARIOS)
@@ -96,7 +99,7 @@ def get_scraping_links(pag_web, tag_link):
 
 
 #IMPORTANTE: aplicar un flitro de cordoba, solo de cordoba con izquierda diario, los demas diarios son locales
-def extraer_seccion(url): #preguntar luego si es correcto
+def extraer_seccion(url): 
     ''' esta funcion extrae la seccion del link, ejemplo: extract section("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
     Devuelve: "provincia-de-buenos-aires" . Si no encuentra la seccion devuelve "NA"'''
     url = url.lower()
@@ -108,20 +111,20 @@ print("extraer seccion:")
 link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
 extraer_seccion(link)
 print("FIN DE EXTRAER SECCION")
-#TENER CUIDAdo con esto
-#fijarse bien luego, este siempre devuelve el ultimo elemento del link o los ultimos elementos del link
+
+
 def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elemento del link
     """esta funcion devuelve la cantidad de palabras en el link, ejemplo: link_length("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro")
     devuelve: 3 donde  es la cantidad de palabras en la seccion del link que es noticia123 extra paro"
     """
     url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
-    return len(url.split("-")) ##no se si deberia 1 
-print("FIN DE LINK LENGTH")
-link = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro"
-print(link_length(link))
-print("FIN DE LINK LENGTH")
+    return len(url.split("-")) #divide el link en palabras separadas por guiones y devuelve la cantidad de palabras
 
-#se fija si el link tiene palabras claves, posiblemente cambiar nombre de funcion, tal vez deberia retornar NA para checkear?
+# print("FIN DE LINK LENGTH")
+# link = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro"
+# print(link_length(link))
+# print("FIN DE LINK LENGTH")
+
 def create_tags(url):
     """esta funcion crea tags a partir del link, ejemplo:
     create_tag("https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/casas-paro-noticia123")
@@ -180,9 +183,6 @@ def crear_enlaces(diario, html_tags):
             "palabras_claves": create_tags(link) #devuelve la palabra clave encontrada en el link, fijarse que onda con la palabra claave paro
         })
     df = pd.DataFrame(data)
-    #print(f"se creo que dataframe para {diario}")
-    #print("este es el famoso Dataframe: ")
-    #print(df)
     return df
 
 #diario = "https://www.laizquierdadiario.com/"
@@ -275,9 +275,6 @@ for i, diario in enumerate(DIARIOS):
         excluir = []
 
     df = df[~df['seccion'].isin(excluir)]
-    #print(f"[INFO] {len(df_sin_filtro)} enlaces obtenidos de {diario}")
-    #print(f"[INFO] {len(df)} enlaces con palabras clave")
-
     #obtiene los titulos y el contenido de los links con palabras claves
     df["titulo"] = None
     df["contenido"] = None
@@ -307,53 +304,6 @@ for i, diario in enumerate(DIARIOS):
 
 
 
-"""
-texto = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés/noticia123"
-print(create_tag(texto))
-"""
-
-"""""
-# URL que queremos analizar
-pagina = "https://www.laizquierdadiario.com/"
-
-# Selector de etiquetas: todas las etiquetas <a>
-selector = "a"
-
-# Llamamos a la función
-enlaces = get_scraping_links(pagina, selector)
-
-# Mostramos los primeros 10 enlaces
-print(enlaces[:10])
-
-
-textos= [
-    "El gremio discute paritarias con el gobierno.",
-    "Se realizó una asamblea de trabajadores.",
-    "Los sindicalistas organizaron una huelga.",
-    "el bajo salario de lxs docentes",
-    "uta esta en paro",
-    "la economia popular esta en auge, ojala no haya ajuste, muy utopico en la Argentina a la que gobierna Milei",
-    "pinpon es un munieco muy guapo y de carton",
-    "BASTA DE RECORTE SALARIAL!"
-]
-
-for t in textos:
-    if PALABRAS_CLAVES.search(t):
-        print("Coincidencia:", t)
-"""
-# funcion para obtener los links, se usa en crate_links
-# def get_scraping_links():
-
-# para linux fedora instalar:
-# /bin/python -m pip install --user pandas
-# para windows
-#  Pulsa Win + R, escribe cmd y presiona Enter o
-#Busca PowerShell y ábrelo.
-# python -m pip install --user pandas
-# o, si tienes el lanzador de Python (py):
-# py -m pip install --user pandas
-
-
-# para bautiful soup instalar:   pip install requests beautifulsoup4
+# para  BeautifulSoup instalar:   pip install requests beautifulsoup4
 
 
