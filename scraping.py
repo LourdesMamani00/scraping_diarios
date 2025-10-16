@@ -66,7 +66,7 @@ HTML_TAGS = [
     ["a"], #"main seccion div article a", "article a"
     ["h2 a"],
     ["div a"],
-    ["h1 a", "h2 a", "h3 a"],
+    ["h1 a", "h2 a", "h3 a", "article a", "figure a"],
 ]
 
 ####################################################################################################################
@@ -172,7 +172,7 @@ def crear_enlaces(diario, html_tags):
     data = []
     for link in links:
         data.append({
-            "fecha": date.today(),
+            "fecha": date.today().strftime("%d-%m-%Y"),
             "diario": diario,
             "link": link,
             "seccion": extraer_seccion(link), #devuelve la seccion del link o NA
@@ -180,9 +180,8 @@ def crear_enlaces(diario, html_tags):
             "palabras_claves": create_tags(link) #devuelve la palabra clave encontrada en el link, fijarse que onda con la palabra claave paro
         })
     df = pd.DataFrame(data)
-    print(f"se creo que dataframe para {diario}")
-    print("este es el famoso Dataframe: ")
-   
+    #print(f"se creo que dataframe para {diario}")
+    #print("este es el famoso Dataframe: ")
     #print(df)
     return df
 
@@ -243,12 +242,12 @@ def obtener_titulo_y_contenido(url, diario=None):
 # print("Titulo:", titulo)
 # print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
 
-#el puntal
-url = "https://www.puntal.com.ar/marc-marquez/marc-marquez-tuvo-que-ser-operado-nuevamente-del-hombro-derecho-y-se-pierde-el-resto-del-campeonato-n244656"
-diario = "https://www.puntal.com.ar/"
-titulo, contenido = obtener_titulo_y_contenido(url, diario)
-print("Titulo:", titulo)
-print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
+# #el puntal
+# url = "https://www.puntal.com.ar/marc-marquez/marc-marquez-tuvo-que-ser-operado-nuevamente-del-hombro-derecho-y-se-pierde-el-resto-del-campeonato-n244656"
+# diario = "https://www.puntal.com.ar/"
+# titulo, contenido = obtener_titulo_y_contenido(url, diario)
+# print("Titulo:", titulo)
+# print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
 
 
 ##################################################################################################################
@@ -262,7 +261,7 @@ for i, diario in enumerate(DIARIOS):
         continue
     #primero filtra los enlaces, si tiene palabras claves las guarda en el dataframe y sino tiene las quita, despues excluye las secciones que no interesan
     df = df_sin_filtro[df_sin_filtro["palabras_claves"].notna() & (df_sin_filtro["palabras_claves"] != "")]
-    df = df[df["tamanio_link"] > 3] #VER ESTO LUEGO
+    #df = df[df["tamanio_link"] > 3] #VER ESTO LUEGO
 
     if "lavoz.com.ar" in diario:
         excluir = ['avisos', 'vos', 'NA', 'deportes', 'espacio-de-marca', 'espacio-publicidad', 'tendencias']
@@ -290,17 +289,19 @@ for i, diario in enumerate(DIARIOS):
 
     df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
 
-    if A_PRUEBA_DE_NOTICIAS_LARGAS == "truncar": #preguntar luego por esto
-        df["contenido"] = df["contenido"].str.slice(0, 32767)
+    #if A_PRUEBA_DE_NOTICIAS_LARGAS == "truncar": #preguntar luego por esto
+      #  df["contenido"] = df["contenido"].str.slice(0, 32767)
 
-    fecha = date.today().strftime("%Y%m%d")
+    #fecha = date.today().strftime("%Y%m%d")
+    fecha = date.today().strftime("%d-%m-%Y")
+
     filename = f"{fecha}_scraping_{CARPETAS[i]}"
     os.makedirs(CARPETAS[i], exist_ok=True)
 
-    if A_PRUEBA_DE_NOTICIAS_LARGAS == "gencsv":
-        df.to_csv(f"{CARPETAS[i]}/{filename}.csv", index=False)
-    else:
-        df.to_excel(f"{CARPETAS[i]}/{filename}.xlsx", index=False)
+   # if A_PRUEBA_DE_NOTICIAS_LARGAS == "gencsv":
+    #    df.to_csv(f"{CARPETAS[i]}/{filename}.csv", index=False)
+    #else:
+    df.to_excel(f"{CARPETAS[i]}/{filename}.xlsx", index=False)
 
     print(f"[OK] Guardado archivo para {CARPETAS[i]} ({len(df)} noticias con palabras clave)")
 
