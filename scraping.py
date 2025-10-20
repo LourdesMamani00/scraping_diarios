@@ -16,7 +16,6 @@ import locale #para saber el mes en español
 # 1. PALABRAS CLAVES
 ########################################
 
-#palabras claves FIJARSE BIEN LUEGO \sate\s O PARO
 PALABRAS_CLAVES = re.compile(
     r'\bparo[a-zA-Z]*\b|\bparan\b|\basamblea[s]?\b|\bhuelga\b|\bmarcha\b|'
     r'\bcortes? de ruta\b|\bcortan ruta\b|\bcortes? de calle\b|\bcortan calle\b|'
@@ -34,8 +33,6 @@ PALABRAS_CLAVES = re.compile(
 #########################################
 # 2. DIARIOS, CARPETAS Y ETIQUETAS (PARAMETROS DE LOS DIARIOS)
 #########################################
-
-A_PRUEBA_DE_NOTICIAS_LARGAS = "truncar"  # o "gencsv"
 
 DIARIOS = [
     "https://www.laizquierdadiario.com/",
@@ -67,7 +64,7 @@ lo que encontro: <a href="nota1.html">Nota 1</a>
 HTML_TAGS = [
     ["div.columnista a", "h2 a", "h3 a"],
     ["h2 a", "h1 a", "article a", "main article seccion h1", "div article a", "article a"],
-    ["a"], #"main seccion div article a", "article a"
+    ["a"], 
     ["h2 a"],
     ["div a"],
     ["h1 a", "h2 a", "h3 a", "article a", "figure a"],
@@ -105,8 +102,6 @@ def extraer_seccion(url):
     Devuelve: "provincia-de-buenos-aires" . Si no encuentra la seccion devuelve "NA"'''
     url = url.lower()
     match = re.search(r'\.com(?:\.ar)?/([^/]+)/?', url) #busca el patron .com/ seguido de cualquier caracter que no sea /, una o mas veces, seguido de /
-    #print(match)
-    #print(match.group(1) if match else "NA")
     return match.group(1) if match else "NA" #si encuentra el patron devuelve el primer elemento del grupo, sino NA
 #print("extraer seccion:")
 #link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
@@ -133,8 +128,6 @@ def create_tags(url):
     """
     url = url.lower() #convierte a minusculas
     url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
-    #print("URL EN CREATE TAG")
-    #print(url)
     url = (url.replace("á","a").replace("é","e")
               .replace("í","i").replace("ó","o").replace("ú","u")
               .replace("-", " ")) #elimina tildes y reemplaza guiones por espacios
@@ -335,9 +328,3 @@ if df_consolidado:
     print(f"   Total de noticias: {len(df_final)}")
 else:
     print("\n[INFO] No se encontraron noticias con palabras clave en ningún diario.")
-
-
-
-# para  BeautifulSoup instalar:   pip install requests beautifulsoup4
-
-
