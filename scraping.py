@@ -6,6 +6,7 @@ from datetime import date, datetime #fechas
 from urllib.parse import urljoin # unir urls relativas con absolutas
 import os #para manejar archivos y directorios
 from newspaper import Article # newspaper es para hacer scrapping de diarios
+import locale #para saber el mes en español
 
 #########################################################################################################
 #   CONFIGURACIONES INICIALES
@@ -45,7 +46,7 @@ DIARIOS = [
     "https://www.puntal.com.ar/",
 ]
 
-CARPETAS = [
+NOMBRE_DEL_DIARIO = [
     "la_izquierda",
     "la_voz_del_interior",
     "la_voz_de_san_justo",
@@ -107,10 +108,10 @@ def extraer_seccion(url):
     #print(match)
     #print(match.group(1) if match else "NA")
     return match.group(1) if match else "NA" #si encuentra el patron devuelve el primer elemento del grupo, sino NA
-print("extraer seccion:")
-link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
-extraer_seccion(link)
-print("FIN DE EXTRAER SECCION")
+#print("extraer seccion:")
+#link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
+#extraer_seccion(link)
+#print("FIN DE EXTRAER SECCION")
 
 
 def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elemento del link
@@ -223,10 +224,16 @@ def obtener_titulo_y_contenido(url, diario=None):
                 print(f"[WARN] No se pudo acceder a {url} - Código {resp.status_code}")
                 return None, None
             soup = BeautifulSoup(resp.text, 'html.parser')
+
+            for footer in soup.find_all('footer'):
+                footer.decompose()  # lo borra del árbol HTML el footer
+            #Buscar todos los párrafos dentro de cualquier <article>
+            contenido_tags = soup.select('article p')
+            #titulo
             title_tag = soup.find('h1')
-            content_tags = soup.find_all('p')
             title = title_tag.get_text(strip=True) if title_tag else None
-            content = '\n'.join(p.get_text(strip=True) for p in content_tags) if content_tags else None
+            #contenido
+            content = '\n'.join(p.get_text(strip=True) for p in contenido_tags) if contenido_tags else None
             return title, content
         else:
             articulo = Article(url)
@@ -234,6 +241,7 @@ def obtener_titulo_y_contenido(url, diario=None):
             articulo.parse()
             return articulo.title, articulo.text
     except Exception as e:
+        print(f"[ERROR] obtener_titulo_y_contenido({url}): {e}")
         return None, None   
         
 #la voz del interior
@@ -251,56 +259,82 @@ def obtener_titulo_y_contenido(url, diario=None):
 
 
 ##################################################################################################################
-#   FUNCION PRINCIPAL O SCRAPING PRINCIPAL
+#   FUNCION PRINCIPAL — SCRAPING MENSUAL CONSOLIDADO
 ##################################################################################################################
 
-for i, diario in enumerate(DIARIOS):
-    #obtiene los enlaces y los pone en un dataframe
-    df_sin_filtro = crear_enlaces(diario, HTML_TAGS[i])
-    if df_sin_filtro.empty: 
-        continue
-    #primero filtra los enlaces, si tiene palabras claves las guarda en el dataframe y sino tiene las quita, despues excluye las secciones que no interesan
-    df = df_sin_filtro[df_sin_filtro["palabras_claves"].notna() & (df_sin_filtro["palabras_claves"] != "")]
-    #df = df[df["tamanio_link"] > 3] #VER ESTO LUEGO
+# Lista donde vamos a acumular los dataframes de todos los diarios 
+df_consolidado = []
 
+for i, diario in enumerate(DIARIOS):
+    print(f"\n[INFO] Procesando {diario}...")
+    df_sin_filtro = crear_enlaces(diario, HTML_TAGS[i])
+    if df_sin_filtro.empty:
+        print(f"[WARN] No se encontraron enlaces en {diario}")
+        continue
+
+    # Filtrar solo links con palabras clave
+    df = df_sin_filtro[df_sin_filtro["palabras_claves"].notna() & (df_sin_filtro["palabras_claves"] != "")]
+
+    # Excluir secciones según diario
     if "lavoz.com.ar" in diario:
         excluir = ['avisos', 'vos', 'NA', 'deportes', 'espacio-de-marca', 'espacio-publicidad', 'tendencias']
     elif "lavozdesanjusto.com.ar" in diario:
-        excluir = ['NA','suplementos']
+        excluir = ['NA', 'suplementos']
     elif "eldiariocba.com.ar" in diario:
-        excluir = ['culturales','el-equipo','espacio-patrocinado']
+        excluir = ['culturales', 'el-equipo', 'espacio-patrocinado']
     elif "cba24n.com.ar" in diario:
-        excluir = ['deportes','tecnologia','espectaculos','programa','contenido-de-marca','vamos-al-movil']
+        excluir = ['deportes', 'tecnologia', 'espectaculos', 'programa', 'contenido-de-marca', 'vamos-al-movil']
     else:
         excluir = []
 
     df = df[~df['seccion'].isin(excluir)]
-    #obtiene los titulos y el contenido de los links con palabras claves
+
+    # Agregar columnas de título y contenido
     df["titulo"] = None
     df["contenido"] = None
-    #rellena el df
-    for idx, row in df.iterrows():   
-        titulo, contenido = obtener_titulo_y_contenido(row["link"], diario) #hay un patron super extranio con el puntal en el link
+
+    for idx, row in df.iterrows():
+        titulo, contenido = obtener_titulo_y_contenido(row["link"], diario)
         df.at[idx, "titulo"] = titulo
         df.at[idx, "contenido"] = contenido
-
+    #asegura que no tenga valores nulos sino cadenas vacias, ni salto de lineas
     df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
 
-    #if A_PRUEBA_DE_NOTICIAS_LARGAS == "truncar": #preguntar luego por esto
-      #  df["contenido"] = df["contenido"].str.slice(0, 32767)
+    # Guardamos la info del diario actual en el consolidado general
+    df_consolidado.append(df)
+    print(f"[OK] Procesado {len(df)} enlaces de {NOMBRE_DEL_DIARIO[i]}")
 
-    #fecha = date.today().strftime("%Y%m%d")
-    fecha = date.today().strftime("%d-%m-%Y")
+# ------------------------------------------------------------------
+#  GUARDADO  MENSUAL EN EXCEL CONSOLIDADO
+# ------------------------------------------------------------------
 
-    filename = f"{fecha}_scraping_{CARPETAS[i]}"
-    os.makedirs(CARPETAS[i], exist_ok=True)
+if df_consolidado:
+    df_final = pd.concat(df_consolidado, ignore_index=True).drop_duplicates(subset=["link"])
 
-   # if A_PRUEBA_DE_NOTICIAS_LARGAS == "gencsv":
-    #    df.to_csv(f"{CARPETAS[i]}/{filename}.csv", index=False)
-    #else:
-    df.to_excel(f"{CARPETAS[i]}/{filename}.xlsx", index=False)
+    # Mes y año actual
+    #mes_actual = datetime.now().strftime("%B_%Y").lower()  # ejemplo: "octubre_2025"
+    locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
+    mes_actual = datetime.now().strftime("%B_%Y").lower()
 
-    print(f"[OK] Guardado archivo para {CARPETAS[i]} ({len(df)} noticias con palabras clave)")
+    # Crear carpeta de salida (una sola general)
+    carpeta_salida = "noticias_mensuales"
+    os.makedirs(carpeta_salida, exist_ok=True)
+
+    # Archivo mensual consolidado
+    filepath = os.path.join(carpeta_salida, f"{mes_actual}_noticias.xlsx")
+
+    # Si ya existe, lo cargamos para agregar nuevas noticias
+    if os.path.exists(filepath):
+        df_existente = pd.read_excel(filepath)
+        df_final = pd.concat([df_existente, df_final]).drop_duplicates(subset=["link"])
+
+    df_final = df_final.drop(columns=["seccion"], errors="ignore")
+
+    df_final.to_excel(filepath, index=False)
+    print(f"\n Archivo mensual consolidado actualizado: {filepath}")
+    print(f"   Total de noticias: {len(df_final)}")
+else:
+    print("\n[INFO] No se encontraron noticias con palabras clave en ningún diario.")
 
 
 
