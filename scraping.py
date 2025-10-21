@@ -173,7 +173,7 @@ def crear_enlaces(diario, html_tags):
             "diario": diario,
             "link": link,
             "seccion": extraer_seccion(link), #devuelve la seccion del link o NA
-            "tamanio_link": link_length(link), #devuelve la cantidad de palabras que vienen luego de la seccion
+            #"tamanio_link": link_length(link), #devuelve la cantidad de palabras que vienen luego de la seccion
             "palabras_claves": create_tags(link) #devuelve la palabra clave encontrada en el link, fijarse que onda con la palabra claave paro
         })
     df = pd.DataFrame(data)
