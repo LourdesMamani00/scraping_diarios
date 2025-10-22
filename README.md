@@ -41,6 +41,10 @@ pip install openpyxl
 ```bash
 pip3 install newspaper3k
 ```
+## Para poder usar HTML instalar:
+```bash
+pip install lxml_html_clean
+```
 ------------------------------------------------------------------
 
 ## Como ejecutar el proyecto:
