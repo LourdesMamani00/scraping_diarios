@@ -38,7 +38,7 @@ PALABRAS_CLAVES = re.compile(
 #########################################
 
 DIARIOS = [
-    "https://www.laizquierdadiario.com/",
+    "https://www.laizquierdadiario.com/Cordoba",
     "https://www.lavoz.com.ar/",
     "http://www.lavozdesanjusto.com.ar/",
     "https://www.eldiariocba.com.ar/",
@@ -65,7 +65,7 @@ soup.select("div.columnista a")
 lo que encontro: <a href="nota1.html">Nota 1</a>
 '''
 HTML_TAGS = [
-    ["div.columnista a", "h2 a", "h3 a"],
+    ["div.columnista a", "h2 a", "h3 a", "div a"],
     ["h2 a", "h1 a", "article a", "main article seccion h1", "div article a", "article a"],
     ["a"], 
     ["h2 a"],
@@ -99,7 +99,6 @@ def get_scraping_links(pag_web, tag_link):
         return []
 
 
-#IMPORTANTE: aplicar un flitro de cordoba, solo de cordoba con izquierda diario, los demas diarios son locales
 def extraer_seccion(url): 
     ''' esta funcion extrae la seccion del link, ejemplo: extract section("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123")
     Devuelve: "provincia-de-buenos-aires" . Si no encuentra la seccion devuelve "NA"'''
@@ -110,19 +109,6 @@ def extraer_seccion(url):
 #link = "https://www.lavoz.com.ar/ciudadanos/centros-de-jubilados-denuncian-demoras-en-pagos-de-pami-por-los-talleres-sociopreventivos/"
 #extraer_seccion(link)
 #print("FIN DE EXTRAER SECCION")
-
-
-def link_length(url):  #fijarse bien luego, este siempre devuelve el ultimo elemento del link
-    """esta funcion devuelve la cantidad de palabras en el link, ejemplo: link_length("https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro")
-    devuelve: 3 donde  es la cantidad de palabras en la seccion del link que es noticia123 extra paro"
-    """
-    url = re.sub(r'https://.*/', '', url.strip("/")) #elimina el diario y la barra al final
-    return len(url.split("-")) #divide el link en palabras separadas por guiones y devuelve la cantidad de palabras
-
-# print("FIN DE LINK LENGTH")
-# link = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Aires/noticia123-extra-paro"
-# print(link_length(link))
-# print("FIN DE LINK LENGTH")
 
 def create_tags(url):
     """esta funcion crea tags a partir del link, ejemplo:
@@ -137,6 +123,10 @@ def create_tags(url):
     tags = PALABRAS_CLAVES.findall(url) #busca todas las coincidencias de palabras claves en el url
     return " ".join(tags) #une las palabras claves encontradas en una sola cadena separada por espacios, si no encuentra palabras claves devuelve vacio ' '
 
+#url = "https://www.laizquierdadiario.com/El-desempleo-desmiente-el-exito-del-modelo-cordobesista"
+#ret = create_tags(url)
+#print("CREATE TAGS:")
+#print(ret)
 
 # ejemplo de uso create tag, CREO QUE ESTA MAL, FIJARSE QUE ONDA CON LAS EXPRESIONES REGULARES
 #ejemplo = "https://www.laizquierdadiario.com/Provincia-de-Buenos-Airés-paro-trabajadores/paro-noticia123/"
@@ -159,16 +149,6 @@ def crear_enlaces(diario, html_tags):
         links.extend(get_scraping_links(diario, tag))
     links = list(set(links))  # Elimina duplicados
     print(f"[INFO] {len(links)} enlaces encontrados en {diario}")
-    
-    if "laizquierdadiario.com" in diario:
-        provincia = "Cordoba"
-        filtro_url = f"laizquierdadiario.com/{provincia}"
-        links_filtrados = [link for link in links if filtro_url in link]
-
-        print(f"[INFO] {len(links_filtrados)} enlaces encontrados de {provincia} en {diario}")
-
-        links = links_filtrados
-    
     data = []
     for link in links:
         data.append({
@@ -176,14 +156,13 @@ def crear_enlaces(diario, html_tags):
             "diario": diario,
             "link": link,
             "seccion": extraer_seccion(link), #devuelve la seccion del link o NA
-            #"tamanio_link": link_length(link), #devuelve la cantidad de palabras que vienen luego de la seccion
             "palabras_claves": create_tags(link) #devuelve la palabra clave encontrada en el link, fijarse que onda con la palabra claave paro
         })
     df = pd.DataFrame(data)
     return df
 
-#diario = "https://www.laizquierdadiario.com/"
-#html_tags = ["div.columnista a", "h2 a", "h3 a"]
+#diario = "https://www.laizquierdadiario.com/Cordoba"
+#html_tags = ["div.columnista a", "h2 a", "h3 a", "div a"]
 
 #diario = "https://www.lavoz.com.ar/"
 #html_tags = ["h2 a", "h1 a, article a", "main article seccion h1", "div article a", "article a"]
@@ -268,7 +247,6 @@ def limpiar_texto_completo(texto):
 ##################################################################################################################
 #   FUNCION PRINCIPAL — SCRAPING MENSUAL CONSOLIDADO
 ##################################################################################################################
-
 # Lista donde vamos a acumular los dataframes de todos los diarios 
 df_consolidado = []
 
@@ -307,7 +285,6 @@ for i, diario in enumerate(DIARIOS):
         df.at[idx, "titulo"] = limpiar_texto_completo(titulo)
         df.at[idx, "contenido"] = limpiar_texto_completo(contenido)
     #asegura que no tenga valores nulos sino cadenas vacias, ni salto de lineas
-    #df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
     # Asegurar que no haya NaN
     df["titulo"] = df["titulo"].fillna("")
     df["contenido"] = df["contenido"].fillna("")
@@ -323,7 +300,7 @@ if df_consolidado:
     df_final = pd.concat(df_consolidado, ignore_index=True).drop_duplicates(subset=["link"])
 
     # Mes y año actual
-    #mes_actual = datetime.now().strftime("%B_%Y").lower()  # ejemplo: "octubre_2025"
+    #mes_actual = datetime.now().strftime("%B_%Y").lower()  # ejemplo: "october_2025"
     locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")
     mes_actual = datetime.now().strftime("%B_%Y").lower()
 
