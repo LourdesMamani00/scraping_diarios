@@ -5,8 +5,11 @@ import re # sirve para buscar, validar y limpiar textos, para expresiones regula
 from datetime import date, datetime #fechas
 from urllib.parse import urljoin # unir urls relativas con absolutas
 import os #para manejar archivos y directorios
-from newspaper import Article # newspaper es para hacer scrapping de diarios
+from newspaper import Article, Config # newspaper es para hacer scrapping de diarios
 import locale #para saber el mes en español
+import unicodedata #para manejar caracteres especiales
+
+
 
 #########################################################################################################
 #   CONFIGURACIONES INICIALES
@@ -250,6 +253,17 @@ def obtener_titulo_y_contenido(url, diario=None):
 # print("Titulo:", titulo)
 # print("Contenido:", contenido[:500])  # Muestra solo los primeros 500 caracteres del contenido
 
+def limpiar_texto_completo(texto):
+    if not texto:
+        return ""
+    
+    texto = unicodedata.normalize('NFKC', texto)
+    texto = texto.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+    texto = texto.replace('\u00A0', ' ')
+    texto = re.sub(r'[\u200B-\u200F\uFEFF]', '', texto)
+    texto = ''.join(ch for ch in texto if unicodedata.category(ch)[0] not in ('C',))
+    texto = re.sub(r'\s+', ' ', texto)
+    return texto.strip()
 
 ##################################################################################################################
 #   FUNCION PRINCIPAL — SCRAPING MENSUAL CONSOLIDADO
@@ -285,14 +299,18 @@ for i, diario in enumerate(DIARIOS):
     # Agregar columnas de título y contenido
     df["titulo"] = None
     df["contenido"] = None
+    df["palabras_claves"] = df["palabras_claves"].apply(limpiar_texto_completo)
 
     for idx, row in df.iterrows():
         titulo, contenido = obtener_titulo_y_contenido(row["link"], diario)
-        df.at[idx, "titulo"] = titulo
-        df.at[idx, "contenido"] = contenido
+        # Limpiar antes de asignar
+        df.at[idx, "titulo"] = limpiar_texto_completo(titulo)
+        df.at[idx, "contenido"] = limpiar_texto_completo(contenido)
     #asegura que no tenga valores nulos sino cadenas vacias, ni salto de lineas
-    df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
-
+    #df["contenido"] = df["contenido"].fillna("").str.replace("\n", " ", regex=False)
+    # Asegurar que no haya NaN
+    df["titulo"] = df["titulo"].fillna("")
+    df["contenido"] = df["contenido"].fillna("")
     # Guardamos la info del diario actual en el consolidado general
     df_consolidado.append(df)
     print(f"[OK] Procesado {len(df)} enlaces de {NOMBRE_DEL_DIARIO[i]}")
